@@ -41,6 +41,11 @@ def find_angle(a_, b_):
     elif (b_ < a_):
         return math.acos(b_/a_)
 
+def list_mod(L, M = 12):
+    for i, l in enumerate(L):
+        L[i] = l % M
+    return L
+
 def setT(mset, T = 0, mod = 12):
     for i, num in enumerate(mset):
         mset[i] = (num+T)%mod
@@ -48,7 +53,7 @@ def setT(mset, T = 0, mod = 12):
 
 def setI(mset, I = 0, mod = 12):
     for i, num in enumerate(mset):
-        mset[i] = (12-num) % mod
+        mset[i] = (mod-num) % mod
     return setT(sorted(mset), T = I)
 
 def make_comment(t):
@@ -92,7 +97,6 @@ def make_score(filedir, scl = 1, caption = " ", pos = ORIGIN):
 class MCircle(VGroup):
     CONFIG = {
         "theta": TAU/12,
-        "mod": 12,
         "stored_sets": [],
         "sets": VGroup(),
         "circle": VGroup()
@@ -128,18 +132,21 @@ class MCircle(VGroup):
     def add_set(self, mset, color = YELLOW):
         new_xyz = []
         new_xyz.clear()
+        mset = sorted(list_mod(mset, self.mod))
         self.stored_sets.append([mset, color])
         for s in mset:
             new_xyz.append(tuple(self[1][1][s%self.mod].get_center()))
         shape = Polygon(*new_xyz, stroke_width = 1.5, color = color)
         self[0].add(shape)
         return self
+
+    def set_mod(self, val):
+        self.mod = val
     
-    def reset(self, new_mod, keep_sets = True):
+    def reset(self, keep_sets = True):
         temp_pos = self[1].get_center()
         temp_sets = self.stored_sets.copy()
-        self.__init__(mod = new_mod)
-        self.gen_circle()
+        self.__init__(mod = self.mod)
         if keep_sets:
             for s in temp_sets:
                 self.add_set(setT(s[0], 0, self.mod), color = s[1])

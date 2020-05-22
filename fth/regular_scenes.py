@@ -129,12 +129,13 @@ class TestFormat(Scene):
         cmt = make_comment("This is a video comment\nwhich can occupy\nmany, many lines...\nmany, even if the text is too long... seriously... too... long!")
         mus = make_score(svg_dir + "tiling canons/ex_1_1.svg", caption = "This is a score caption", scl = 0.5, pos = DOWN)
         items = [hdr, line1, line2, line3, line4, mus]
-        circ = MCircle(12).add_set([0,3,5]).move_to(RIGHT*2.8 + DOWN*0.5)
+        circ = MCircle(10).add_set([0,3,5]).move_to(RIGHT*2.8 + DOWN*0.5)
         csets = SetsFromCircle(circ)
         for mo in items:
             self.play(
                 Write(mo)
             )
+        print(circ.mod)
         self.play(
             FadeInFrom(fn, LEFT)
         )
@@ -147,9 +148,8 @@ class TestFormat(Scene):
             csets.show, circ,
         )
         self.wait()
-        self.wait()
         self.play(
-            circ.add_set, [0,3,4,8], BLUE,
+            circ.add_set, [0,3,4,8,12], BLUE,
             circ.transpose, 3,
             csets.show, circ,
         )
@@ -159,8 +159,9 @@ class TestFormat(Scene):
             csets.show, circ,
         )
         self.wait()
+        circ.set_mod(20)
         self.play(
-            circ.reset, 20, False,
+            circ.reset, False,
             csets.show, circ,
         )
         self.wait()
@@ -172,8 +173,9 @@ class TestFormat(Scene):
             circ.add_set, [5,10,21], GREEN,
             csets.show, circ,
         )
+        circ.set_mod(24)
         self.play(
-            circ.reset, 24, True
+            circ.reset, True
         )
         self.wait()
 
