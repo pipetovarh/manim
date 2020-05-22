@@ -12,23 +12,26 @@ class Grid(VGroup):
 
         x_step = self.width / self.columns
         y_step = self.height / self.rows
-
+        opacity_list = [0.75,0.25]
+        i = 0
         for x in np.arange(0, self.width + x_step, x_step):
             self.add(Line(
                 [x - self.width / 2., -self.height / 2., 0],
-                [x - self.width / 2., self.height / 2., 0],
+                [x - self.width / 2., self.height / 2., 0], stroke_opacity = opacity_list[i]
             ))
+            i = (i + 1) % len(opacity_list)
+        i = 0
         for y in np.arange(0, self.height + y_step, y_step):
             self.add(Line(
                 [-self.width / 2., y - self.height / 2., 0],
-                [self.width / 2., y - self.height / 2., 0]
+                [self.width / 2., y - self.height / 2., 0], stroke_opacity = opacity_list[i]
             ))
-
+            i = (i + 1) % len(opacity_list)
 
 class ScreenGrid(VGroup):
     CONFIG = {
-        "rows": 8,
-        "columns": 14,
+        "rows": 16,
+        "columns": 28,
         "height": FRAME_Y_RADIUS * 2,
         "width": 14,
         "grid_stroke": 0.5,
@@ -77,16 +80,8 @@ class ScreenGrid(VGroup):
                     label = Text(f"{coord_point}",font="Arial",stroke_width=0).scale(self.labels_scale)
                     label.next_to(ubication, directions_buff, buff=self.labels_buff)
                     labels.add(label)
-
         self.add(grid, axes, labels)
 
-
-class CoordScreen(Scene):
-    def construct(self):
-        screen_grid = ScreenGrid()
-        dot = Dot([1, 1, 0])
-        self.add(screen_grid)
-        self.play(FadeIn(dot))
-        self.wait()
+from manimlib.imports import *
 
 grid = ScreenGrid()

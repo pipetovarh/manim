@@ -3,14 +3,13 @@ from fth.imports import *
 
 class OpeningTitle(Scene): 
     CONFIG  = {
-        "camera_config":{"background_color": BLACK},
+        "camera_config":{"background_color": FTH_BG},
         "mycolors": [WHITE, LIGHT_GREY, DARK_GREY, LIGHT_GREY],
         "a" : 4.6,
         "b": 0.4,
         "c": 0,
-        # "titletext" = "c r i t i c a l   b a n d",
-        "titletext": "the beauty of noise",
-        "subtitle_text": "v  i  d  e  o     s  e  r  i  e  s",
+        "titletext": "a hidden noise",
+        "subtitle_text": "essays on music",
         "website_text": "w w w . f e l i p e - t o v a r - h e n a o . c o m"
     } 
 
@@ -21,7 +20,7 @@ class OpeningTitle(Scene):
         sqg = VGroup()
         words = VGroup()
         title = Text(self.titletext, color=RED_C, font = fth_font, stroke_width = 1, stroke_color = DARK_GREY, stroke_opacity = 1).scale(2.5)
-        subtitle = Text(self.subtitle_text, color=RED_C, font = fth_font,stroke_width = 1, stroke_color = DARK_GREY, stroke_opacity = 1).move_to(DOWN)
+        subtitle = Text(self.subtitle_text, color=WHITE, font = fth_font,stroke_width = 1, stroke_color = DARK_GREY, stroke_opacity = 1).move_to(DOWN)
         website = Text(self.website_text, font = fth_font, color=WHITE, stroke_width=0.5, stroke_color=DARK_BLUE).scale(0.5).move_to(DOWN*3.6)
         words.add(title, subtitle).move_to(ORIGIN)
         words.add(title, subtitle)
@@ -42,9 +41,11 @@ class OpeningTitle(Scene):
             FadeOut(website),
             run_time = 1.5
         )
+        self.wait(0.3)
 
 class EpisodeTitle(Scene):
     CONFIG = {
+        "camera_config":{"background_color": FTH_BG},
         "title": "t i l i n g  c a n o n s",
         "part": "part 1:",
         "subtitle": "basic properties",
@@ -65,48 +66,9 @@ class EpisodeTitle(Scene):
         )
         self.wait(1)
 
-class TextOnly(Scene):
-    CONFIG = {
-        "spacing": 0.8
-    }
-    def construct(self):
-        totalHeight = 0
-        totalWidth = 0
-        textItems = [ # text sequence
-            "Possible Vuza Canons:",
-            "   • [0,0,0,1]",
-            "   • {0,1,2,3,4}"
-        ]
-        waitTimes = [1,3,3] # timing between text
-        for i in range(len(textItems)):
-            line = Text(textItems[i], font=fth_font).align_to(TL, UL).shift(DOWN*i*self.spacing)
-            self.play(
-                Write(line)
-            )
-            self.wait(waitTimes[i])
-            
-class MusicExample(Scene): 
-    def construct(self):
-        example = VGroup()
-        mus = SVGMobject(svg_dir + "sampscore3.svg", stroke_width = 0.3,color=DARKER_GREY).scale(2.3)
-        fw = mus.get_width()
-        fh = mus.get_height()
-        frame = RoundedRectangle(width=fw, height=fh, corner_radius=0.2, fill_color=WHITE, fill_opacity=1, stroke_width=2, stroke_color=BLUE).move_to(mus.get_center()).scale(1.15)
-        subtitle = Text("Ex. 1: Interval cycles from «...de lo voluble...»", t2c = {"«...de lo voluble...»":RED}, font = fth_font, color=BLUE).scale(0.5).move_to(frame.get_bottom() + DOWN*0.5)
-        example.add(subtitle,frame, mus)
-        self.play( 
-            Write(example, lag_ratio=0, stroke_width = 2),
-            run_time=2
-        )
-        self.add_sound(audio_dir+"playback.mp3")
-        self.wait(4)
-        self.play(
-            FadeOut(example)
-        )
-        self.wait()
-
 class Subscribe(Scene):
     CONFIG = {
+        "camera_config":{"background_color": FTH_BG},
         "h_spacing": 0.8
     }
     def construct(self):
@@ -126,7 +88,9 @@ class Subscribe(Scene):
                 l[0].set_fill("#ff0000")
                 l[1].set_stroke(BLACK, width=0)
             if (logonames[i] == "patreon"):
-                l.set_stroke(BLACK, width=0)
+                l.scale(1.25)
+                l[0].set_fill("#f96854")
+                l[2].set_fill("#052d49")
             if (logonames[i] == "soundcloud"):
                 l.set_color_by_gradient("#ff8800", "#ff3300").set_stroke(WHITE)
             logos.add(l)
@@ -151,20 +115,106 @@ class Subscribe(Scene):
         )
         self.wait(1)
 
+class TestFormat(Scene):
+    CONFIG  = {
+        "camera_config":{"background_color": FTH_BG}
+    } 
+    def construct(self):
+        hdr = make_header("This is a header")
+        line1 = make_text("This is a line without bullet point", bullet = False)
+        line2 = make_text("This is an indented line with bullet point", line_index = 1, indent=1)
+        line3 = make_text("This is an indented line without bullet point", line_index = 2, indent=2, bullet = False)
+        line4 = make_text("This is another line", line_index = 3, bullet = False)
+        fn = make_footnote("[1] This is a video foot note.\nIt can be quite long... very, very, very looooong\nor have many, many\nmany,\nmany lines too.")
+        cmt = make_comment("This is a video comment\nwhich can occupy\nmany, many lines...\nmany, even if the text is too long... seriously... too... long!")
+        mus = make_score(svg_dir + "tiling canons/ex_1_1.svg", caption = "This is a score caption", scl = 0.5, pos = DOWN)
+        items = [hdr, line1, line2, line3, line4, mus]
+        circ = MCircle(12).add_set([0,3,5]).move_to(RIGHT*2.8 + DOWN*0.5)
+        csets = SetsFromCircle(circ)
+        for mo in items:
+            self.play(
+                Write(mo)
+            )
+        self.play(
+            FadeInFrom(fn, LEFT)
+        )
+        self.play(
+            FadeInFrom(cmt, RIGHT)
+        )
+        self.play(
+            FadeOut(mus), #ReplacementTransform(mus, circ),
+            Write(circ),
+            csets.show, circ,
+        )
+        self.wait()
+        self.wait()
+        self.play(
+            circ.add_set, [0,3,4,8], BLUE,
+            circ.transpose, 3,
+            csets.show, circ,
+        )
+        self.wait()
+        self.play(
+            circ.inversion,
+            csets.show, circ,
+        )
+        self.wait()
+        self.play(
+            circ.reset, 20, False,
+            csets.show, circ,
+        )
+        self.wait()
+        self.play(
+            circ.add_set, [3,14,20], ORANGE,
+            csets.show, circ,
+        )
+        self.play(
+            circ.add_set, [5,10,21], GREEN,
+            csets.show, circ,
+        )
+        self.play(
+            circ.reset, 24, True
+        )
+        self.wait()
 
-
-
-        
-
-    
-
-
-
-
-
-
-
-
+class TestCircle(Scene):
+    CONFIG  = {
+        "camera_config":{"background_color": FTH_BG}
+    } 
+    def construct(self):
+        setA = [0,4,7]
+        setB = [0,5,10]
+        c = MCircle().add_set(setA).transpose(T = 0)
+        sets = SetsFromCircle(c)
+        self.play(
+            Write(c),
+            Write(sets)
+        )
+        self.play(
+            ApplyMethod(c.move_to, RIGHT),
+            ApplyMethod(sets.show, c),
+            ApplyMethod(sets.shift, RIGHT),
+            run_time = 1
+        )
+        self.play(
+            ApplyMethod(c.inversion, 3),
+            ApplyMethod(c.move_to, RIGHT),
+            ApplyMethod(sets.show, c),
+            run_time = 1
+        )
+        c.move_to(RIGHT)
+        self.play(
+            ApplyMethod(c.add_set, [2,5,6], BLUE),
+            ApplyMethod(sets.show, c),
+        )
+        self.play(
+            ApplyMethod(c.reset, 8),
+            ApplyMethod(sets.show, c),   
+        )
+        self.play(
+            ApplyMethod(sets.show, c),   
+        )
+        self.wait(3)
 
 
 
