@@ -1,5 +1,5 @@
 from manimlib.imports import *
-
+from random import *
 fth_font = "EberaNew"
 fth_sym = "Petrucci"
 media_dir = "./fth/media/"
@@ -40,6 +40,26 @@ def find_angle(a_, b_):
         return math.acos(a_/b_* -1)
     elif (b_ < a_):
         return math.acos(b_/a_)
+
+def linden(axiom, rules, generations = 1):
+    out = ""
+    for i in range(len(axiom)):
+        for j in rules:
+            if len(j) != 2:
+                raise "rules must only contain size 2 arrays"
+            else:
+                if axiom[i] == j[0]:
+                    out += j[1]
+    if generations > 0:
+        return linden(out, rules, generations - 1)
+    else:
+        return out
+
+def distance(L1, L2):
+    out = 0
+    for i, j in zip(L1, L2):
+        out += (i-j)**2
+    return np.sqrt(out)
 
 def list_mod(L, M = 12):
     for i, l in enumerate(L):
@@ -103,7 +123,7 @@ class MCircle(VGroup):
     }
     def __init__(self, mod = 12, radius = 1.5, **kwargs):
         digest_config(self, kwargs)
-        VGroup.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.mod = mod
         self.theta = TAU/self.mod
         self.radius = radius
@@ -177,6 +197,162 @@ class SetsFromCircle(MCircle):
 
     def show(self, mobject):
         self.__init__(mobject)
+
+class ModCircle(Square):
+    """
+        The ModCircle class creates a mod-n circle 
+        in which polygon-style sets can be inscribed 
+        via the ModSet class
+    """
+    CONFIG = {
+        "radius": 1.5,
+        "mod": 12,
+        "theta": -TAU/12,
+        "txt_size": 0.5,
+        "node_size": 1
+    }
+    def __init__(self, mod = 12, **kwargs):
+        digest_config(self, kwargs)
+        Square.__init__(self, side_length = self.radius * 3, stroke_opacity = 0, **kwargs) # Frame of ModCircle
+        self.set_mod(mod)
+        self.draw()
+    
+    def draw(self):
+        # draw() is meant to be used after self.mod has been used
+        previous_pos = self.get_center()
+        self.reset()
+        self.set_theta()
+        self.move_to(ORIGIN)
+        nodes = VGroup()
+        nums = VGroup()
+        for i in range(self.mod):
+            x = np.cos((self.theta*i) + PI/2) * self.radius
+            y = np.sin((self.theta*i) + PI/2) * self.radius
+            nodes.add(Dot(color = RED).scale(self.node_size).move_to((x, y, 0)))
+            nums.add(Text(str(i), font = fth_font, color = FTH_PAPER).scale(self.txt_size).move_to((x * 1.2, y * 1.2, 0)))
+        self.add(Circle(radius = self.radius), nodes, nums)
+        self.move_to(previous_pos)
+
+    def reset(self):
+        for mo in self:
+            for smo in mo:
+                mo.remove(smo)
+            self.remove(mo)
+
+    def resize(self, num):
+        self.radius *= num
+        self.txt_size *= num
+        self.node_size *= num
+        return self
+
+    def set_theta(self):
+        self.theta = -TAU/self.mod
+        return self
+
+    def set_mod(self, M):
+        # set_mod() is meant to be used outside of self.play
+        self.mod = M
+        return self
+
+    def get_nodes(self):
+        return self[2]
+
+    def get_mod(self):
+        return self.mod
+
+class ModSet(VGroup):
+    """
+        The ModSet class creates a geometric representation of 
+        a mod-n set in the form of a polygon. This polygon is inscribed 
+        inside a ModCircle, which must be given to initiate the class.
+    """
+    CONFIG = {
+        'mset': []
+    }
+    def __init__(self, circle, mset, color = YELLOW, **kwargs):
+        # circle must be an ModCircle class and modset an array of integers
+        digest_config(self, kwargs)
+        VGroup.__init__(self, **kwargs)
+        self.circle = circle.copy()
+        self.color = color
+        self.set_mset(mset)
+        self.reset()
+        self.build_shape()
+
+    def draw(self):
+        # draw() is meant to be used inside self.play() after set_circle() has been called
+        self.reset()
+        self.build_shape()
+
+    def build_shape(self):
+        vertices = []
+        for i in self.mset:
+            pos = self.circle.get_nodes()[i].get_center()
+            vertices.append(pos)
+        shape = Polygon(*vertices, color = self.color, stroke_width = 2)
+        self.add(shape)
+        
+    # Setters
+    def set_mset(self, s):
+        self.mset = sorted(s)
+
+    def set_circle(self, circle):
+        self.circle = circle.copy()
+        self.circle.draw()
+        self.set_mset(setT(self.mset, T = 0, mod = self.circle.mod))
+    
+    def reset(self):
+        for mo in self:
+            for smo in mo:
+                mo.remove(smo)
+            self.remove(mo)
+        self.add(Square(side_length = self.circle[0].side_length, stroke_opacity = 0).move_to(self.circle))
+
+    # Set transformations
+    def transposition(self, T):
+        self.set_mset(setT(self.mset, T = T, mod = self.circle.mod))
+        self.rotate(self.circle.theta * T)
+
+    def inversion(self):
+        self.set_mset(setI(self.mset, mod = self.circle.mod))
+        self.flip(UP)
+
+    def get_mset(self):
+        return [sorted(self.mset), self.color]
+
+class ModText(VGroup):
+    def __init__(self, modset, **kwargs):
+        digest_config(self, kwargs)
+        VGroup.__init__(self, **kwargs)
+        self.draw(modset)
+
+    def draw(self, modset):
+        self.pos = self.get_center()
+        self.reset()
+        self.modset = modset.get_mset()
+        self.modtext = Text(str(self.modset[0]), font = fth_font, color = self.modset[1]).scale(0.5).move_to(self.pos)
+        self.add(self.modtext)
+
+    def reset(self):
+        for mo in self:
+            for smo in mo:
+                mo.remove(smo)
+            self.remove(mo)
+
+
+    
+
+
+
+
+
+
+
+    
+    
+
+
+
 
 
 

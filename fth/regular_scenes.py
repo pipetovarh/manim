@@ -1,5 +1,7 @@
 from manimlib.imports import *
 from fth.imports import *
+import random
+from collections import deque
 
 class OpeningTitle(Scene): 
     CONFIG  = {
@@ -129,33 +131,49 @@ class TestFormat(Scene):
         cmt = make_comment("This is a video comment\nwhich can occupy\nmany, many lines...\nmany, even if the text is too long... seriously... too... long!")
         mus = make_score(svg_dir + "tiling canons/ex_1_1.svg", caption = "This is a score caption", scl = 0.5, pos = DOWN)
         items = [hdr, line1, line2, line3, line4, mus]
-        circ = MCircle(10).add_set([0,3,5]).move_to(RIGHT*2.8 + DOWN*0.5)
+        circ = MCircle(12).move_to(RIGHT*3)
         csets = SetsFromCircle(circ)
-        for mo in items:
-            self.play(
-                Write(mo)
-            )
-        print(circ.mod)
+        # for mo in items:
+        #     self.play(
+        #         Write(mo)
+        #     )
+        # print(circ.mod)
+        # self.play(
+        #     FadeInFrom(fn, LEFT)
+        # )
+        # self.play(
+        #     FadeInFrom(cmt, RIGHT)
+        # )
         self.play(
-            FadeInFrom(fn, LEFT)
-        )
-        self.play(
-            FadeInFrom(cmt, RIGHT)
-        )
-        self.play(
-            FadeOut(mus), #ReplacementTransform(mus, circ),
+           # FadeOut(mus), 
             Write(circ),
-            csets.show, circ,
+        )
+        self.play(
+            circ.add_set, [0,3,5],
+        )
+        csets.show(circ)
+        self.play(
+            Write(csets)
         )
         self.wait()
         self.play(
             circ.add_set, [0,3,4,8,12], BLUE,
-            circ.transpose, 3,
+            circ.add_set, [4,8,11], PURPLE,
             csets.show, circ,
         )
         self.wait()
         self.play(
-            circ.inversion,
+            circ.inversion, 1,
+            csets.show, circ,
+        )
+        for _ in range(3):
+            self.play(
+                circ.transpose, 0,
+                csets.show, circ,
+            )
+        self.play(
+            circ.add_set, [0,4,8], PINK,
+            circ.transpose, 2, {"set_index": 1},
             csets.show, circ,
         )
         self.wait()
@@ -173,50 +191,132 @@ class TestFormat(Scene):
             circ.add_set, [5,10,21], GREEN,
             csets.show, circ,
         )
-        circ.set_mod(24)
+        circ.transpose(3,0)
         self.play(
-            circ.reset, True
+            circ.transpose, 3, {"set_index": 0},
+            circ.transpose, 3, {"set_index": 1},
+        ) 
+        self.play(
+            circ.inversion, 3, 0,
+            circ.inversion, 3, 1,
         )
         self.wait()
 
-class TestCircle(Scene):
-    CONFIG  = {
-        "camera_config":{"background_color": FTH_BG}
-    } 
+class NewIntro(Scene):
     def construct(self):
-        setA = [0,4,7]
-        setB = [0,5,10]
-        c = MCircle().add_set(setA).transpose(T = 0)
-        sets = SetsFromCircle(c)
+        # colorList = [RED_E, MAROON_E, PURPLE_E, BLUE_E, TEAL_E, GREEN_E, YELLOW_E, GOLD_E]
+        colorList = [DARKER_GREY, BLACK, DARKER_GREY, DARK_GREY, LIGHT_GREY, WHITE, LIGHT_GREY, DARK_GREY]
+        A = 5.5
+        B = A * 0.083
+        AB = A + B
+        C = AB*0.5*np.sqrt(3)
+        x = B * np.sin(PI/3)
+        y = A - (B * np.cos(PI/3))
+        theta = np.arctan(x/y)
+        Z = x/np.sin(theta)
+        c = AB*0.5*np.tan(PI/6)
+        scl = Z/AB
+        vertices = [
+            (0,0,0),
+            (AB, 0, 0),
+            (AB/2, C, 0)
+        ]
+ 
+        def make_tri(num):
+            new_vertices = []
+            numv = len(vertices)
+            for i in range(numv):
+                new_vertices.append(vertices[(i+num)%numv])
+            col = colorList[num%len(colorList)]
+            sub_tri = Polygon(*new_vertices, stroke_width = 0.5, fill_color = col, fill_opacity = 1, stroke_color = BLACK).move_to(ORIGIN).shift((0,C*0.5-c,0))
+            shape = VGroup(Square(side_length = AB, stroke_opacity = 0, stroke_width = 0.5), sub_tri).move_to(ORIGIN).rotate(PI)
+            return shape
+        logo = VGroup() 
+        rotate = 0
+        for i in range(16):
+            triangle = make_tri(rotate)
+            tri = triangle.copy()
+            tri.rotate(-theta*i, about_point = tri[0].get_center()).scale(scl**i)
+            logo.add(tri[1])
+            last_scl = scl**i
+            last_theta = -theta*i
+            rotate += 1
+
+        old_tri = tri.copy()
+        for i in range(1, 16):
+                triangle = make_tri(rotate)
+                triangle.rotate(last_theta, about_point = old_tri[0].get_center()).scale(last_scl)
+                tri = triangle.copy()
+                tri.rotate(-theta*i, about_point = tri[0].get_center()).scale(scl**i)
+                logo.add(tri[1])
+                new_tri = tri.copy()
+                new_scl = scl**i
+                rotate += 1
+
         self.play(
-            Write(c),
-            Write(sets)
-        )
-        self.play(
-            ApplyMethod(c.move_to, RIGHT),
-            ApplyMethod(sets.show, c),
-            ApplyMethod(sets.shift, RIGHT),
-            run_time = 1
-        )
-        self.play(
-            ApplyMethod(c.inversion, 3),
-            ApplyMethod(c.move_to, RIGHT),
-            ApplyMethod(sets.show, c),
-            run_time = 1
-        )
-        c.move_to(RIGHT)
-        self.play(
-            ApplyMethod(c.add_set, [2,5,6], BLUE),
-            ApplyMethod(sets.show, c),
-        )
-        self.play(
-            ApplyMethod(c.reset, 8),
-            ApplyMethod(sets.show, c),   
-        )
-        self.play(
-            ApplyMethod(sets.show, c),   
+            Write(logo.move_to(ORIGIN), lag_ratio = 0.02, rate_func = lingering, stroke_color = DARK_GREY, stroke_width = 1.5), 
+            # logo.rotate, TAU,
+            run_time = 5
         )
         self.wait(3)
+
+class NewCircle(Scene):
+    def construct(self):
+        c = ModCircle(12).move_to(RIGHT)
+        s = ModSet(c, [0,4,8])
+        t = ModText(s).move_to(BL)
+        def update_set(obj):
+            obj.move_to(c)
+        s.add_updater(update_set)
+        self.play(
+            Write(s), 
+            Write(c),
+            Write(t)
+        )
+        for i in range(2):
+            c.resize(0.9)
+            s.set_circle(c)
+            self.play(
+                c.draw,
+                s.draw,
+                t.draw, s
+            )
+            self.play(
+                s.transposition, 1,
+                t.draw, s
+            )
+            self.play(
+                s.inversion,
+                t.draw, s
+            )
+            self.play(
+                c.shift, LEFT*0.5
+            )
+        self.play(
+            c.move_to, ORIGIN
+        )
+        for i in range(10, 20):
+            c.set_mod(i)
+            s.set_circle(c)
+            self.play(
+                c.draw,
+                s.draw,
+                t.draw, s,
+            )
+        for i in range(5):
+            self.play(
+                s.transposition, -1,
+                t.draw, s,
+            )
+            self.play(
+                s.inversion, 
+                t.draw, s,
+            )
+        self.wait()
+
+
+
+
 
 
 
